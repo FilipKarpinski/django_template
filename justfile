@@ -74,5 +74,5 @@ set dotenv-load := true
     rm -rf .pytest_cache/
     rm -rf ./src/.pytest_cache/
     rm -rf .coverage
-    rm -rf .mypy_cache/
+    rm -rf .ty_cache/
     find . | grep -E "(__pycache__|\.pyc$)" | xargs rm -rf

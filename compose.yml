@@ -29,9 +29,9 @@ services:
     <<: [*default-app]
     ports:
       - "8000:8000"
-    command: ["granian", "--interface", "asginl", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command: ["granian", "--interface", "asgi", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     healthcheck:
-      test: "${DOCKER_APP_HEALTHCHECK_TEST:-curl localhost:8000/health}"
+      test: "curl -f localhost:8000/health"
       interval: "60s"
       timeout: "3s"
       start_period: "5s"
@@ -48,7 +48,6 @@ services:
       - "5432:5432"
     volumes:
       - "db:/var/lib/postgresql/data"
-      - .:/src:cache
     restart: unless-stopped
     stop_grace_period: "3s"
     healthcheck:

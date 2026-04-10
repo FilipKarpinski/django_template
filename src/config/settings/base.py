@@ -85,6 +85,8 @@ DATABASES = {
     ),
 }
 
+DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=600)
+
 """
 # Config for SQLite3 database
 if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
@@ -143,6 +145,9 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = PROJECT_ROOT / "staticfiles"
 
+MEDIA_URL = "media/"
+MEDIA_ROOT = PROJECT_ROOT / "media"
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -151,5 +156,34 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# Logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} {levelname} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
