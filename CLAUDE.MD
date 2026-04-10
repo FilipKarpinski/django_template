@@ -81,6 +81,12 @@ Before implementing ANY task, check if relevant skills apply:
 
 - Debugging issues → `systematic-debugging` skill
 - Exploring Django project (models, URLs, settings) → `django-extensions` skill
+- Working with Django models → `django-models` skill
+- Working with Django forms → `django-forms` skill
+- Working with Django templates → `django-templates` skill
+- Working with HTMX patterns → `htmx-patterns` skill
+- Working with Celery tasks → `celery-patterns` skill
+- Writing tests → `pytest-django-patterns` skill
 - Creating new skills → `skill-creator` skill
 - Starting a new task → `onboard` skill
 - Working a ticket → `ticket` skill
