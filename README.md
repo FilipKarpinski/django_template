@@ -46,8 +46,39 @@ Available recipes:
     test *ARGS        # run tests
     test-cov *ARGS    # run tests with coverage
     clean *ARGS       # clean up cache files etc.
+    prod-start *ARGS  # start production stack
+    prod-stop *ARGS   # stop production stack
 ```
 
 
-## Acknowledgement
-This boilerplate is inspired by [Nick Janetakis' docker-django-example](https://github.com/nickjj/docker-django-example) and [Jeff Triplett's django-startproject](https://github.com/jefftriplett/django-startproject/). I used a lot of patterns, practices and also code snippets from their projects. I highly recommend taking a look at their repos as it may be more usefull. This boilerplate is an opinionated copy/mix of their work to make it fit my personal needs.
+## Prerequisites
+
+### Local Development
+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) - Python package manager
+- [just](https://github.com/casey/just) - Command runner
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
+
+Copy `.env.example` to `.env` (done automatically by `just bootstrap`). The defaults work out of the box for local development.
+
+### CI/CD
+
+The GitHub Actions workflow requires no additional secrets for lint and test jobs. The `GITHUB_TOKEN` is provided automatically by GitHub.
+
+On push to `main`, the `release` job builds a Docker image and pushes it to GitHub Container Registry (`ghcr.io`). For this to work:
+
+1. **Enable write access for GitHub Actions** — go to Settings > Actions > General > Workflow permissions and set to **"Read and write permissions"**
+2. No extra secrets needed — `GITHUB_TOKEN` has `packages: write` permission configured in the workflow
+
+The image is published as `ghcr.io/<owner>/<repo>:latest` and `ghcr.io/<owner>/<repo>:sha-<commit>`.
+
+### Production Deployment
+
+1. Copy `.env.prod.example` to `.env` on your production server
+2. Fill in the required values:
+   - `DJANGO_SECRET_KEY` — generate with `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
+   - `DJANGO_ALLOWED_HOSTS` — comma-separated list of your domain(s)
+   - `POSTGRES_PASSWORD` — strong database password
+   - `DATABASE_URL` — must match `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB`
+   - `APP_IMAGE` — your ghcr.io image (e.g., `ghcr.io/<owner>/<repo>:latest`)
+3. Start with `just prod-start` or `docker compose -f compose.prod.yml up -d`
