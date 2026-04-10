@@ -74,11 +74,98 @@ The image is published as `ghcr.io/<owner>/<repo>:latest` and `ghcr.io/<owner>/<
 
 ### Production Deployment
 
-1. Copy `.env.prod.example` to `.env` on your production server
-2. Fill in the required values:
-   - `DJANGO_SECRET_KEY` — generate with `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
-   - `DJANGO_ALLOWED_HOSTS` — comma-separated list of your domain(s)
-   - `POSTGRES_PASSWORD` — strong database password
-   - `DATABASE_URL` — must match `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB`
-   - `APP_IMAGE` — your ghcr.io image (e.g., `ghcr.io/<owner>/<repo>:latest`)
-3. Start with `just prod-start` or `docker compose -f compose.prod.yml up -d`
+On every push to `main`, the CI pipeline builds a Docker image, pushes it to GHCR, then SSHs into your VPS to pull and restart the app. Follow these steps to set it up.
+
+#### 1. Provision the VPS
+
+Install Docker and Docker Compose on your server (e.g., Hetzner, DigitalOcean):
+
+```sh
+# Install Docker (Ubuntu/Debian)
+curl -fsSL https://get.docker.com | sh
+```
+
+#### 2. Create a deploy user on the VPS
+
+```sh
+# On the VPS
+sudo adduser --disabled-password deploy
+sudo usermod -aG docker deploy
+```
+
+#### 3. Generate an SSH key pair for CI
+
+On your local machine, generate a dedicated key pair (no passphrase):
+
+```sh
+ssh-keygen -t ed25519 -f ~/.ssh/deploy_key -C "github-actions-deploy" -N ""
+```
+
+Add the **public** key to the VPS:
+
+```sh
+# Copy the public key to the deploy user's authorized_keys
+ssh-copy-id -i ~/.ssh/deploy_key.pub deploy@<your-vps-ip>
+```
+
+#### 4. Add GitHub repository secrets
+
+Go to your repo **Settings > Secrets and variables > Actions** and add:
+
+| Secret | Value |
+|--------|-------|
+| `DEPLOY_HOST` | Your VPS IP address or hostname |
+| `DEPLOY_USER` | `deploy` (or whichever user you created) |
+| `DEPLOY_SSH_KEY` | Contents of `~/.ssh/deploy_key` (the **private** key) |
+| `DEPLOY_PATH` | Absolute path to the project on the VPS (e.g., `/home/deploy/myapp`) |
+
+#### 5. Set up the project on the VPS
+
+```sh
+# SSH into the VPS as the deploy user
+ssh deploy@<your-vps-ip>
+
+# Create the project directory
+mkdir -p ~/myapp && cd ~/myapp
+
+# Copy the production compose file and env
+# (from your local machine)
+scp compose.prod.yml .env.prod.example deploy@<your-vps-ip>:~/myapp/
+scp -r nginx deploy@<your-vps-ip>:~/myapp/
+
+# On the VPS, create and configure .env
+cd ~/myapp
+cp .env.prod.example .env
+```
+
+Edit `.env` and fill in the required values:
+
+- `DJANGO_SECRET_KEY` — generate with `python3 -c "import secrets; print(secrets.token_urlsafe(50))"`
+- `DJANGO_ALLOWED_HOSTS` — comma-separated list of your domain(s)
+- `CSRF_TRUSTED_ORIGINS` — comma-separated, with `https://` prefix (e.g., `https://yourdomain.com`)
+- `POSTGRES_PASSWORD` — strong database password
+- `DATABASE_URL` — must match `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB`
+- `APP_IMAGE` — your GHCR image (e.g., `ghcr.io/<owner>/<repo>:latest`)
+
+#### 6. First deploy
+
+Start the stack manually the first time to run initial migrations:
+
+```sh
+cd ~/myapp
+docker compose -f compose.prod.yml pull
+docker compose -f compose.prod.yml up -d
+docker compose -f compose.prod.yml exec app python manage.py migrate
+docker compose -f compose.prod.yml exec app python manage.py createsuperuser
+```
+
+#### 7. Verify auto-deploy
+
+Push a commit to `main`. The CI pipeline will:
+
+1. **Lint** — ruff, ty, hadolint
+2. **Test** — pytest in Docker
+3. **Release** — build and push image to `ghcr.io/<owner>/<repo>:latest`
+4. **Deploy** — SSH into VPS, pull the new image, restart containers, prune old images
+
+Monitor the workflow in the **Actions** tab of your repository.
