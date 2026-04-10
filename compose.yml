@@ -9,7 +9,7 @@ x-app: &default-app
       DJANGO_DEBUG: "${DJANGO_DEBUG:-false}"
   depends_on:
     db:
-      condition: service_started
+      condition: service_healthy
   restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
   stop_grace_period: "3s"
   tty: true

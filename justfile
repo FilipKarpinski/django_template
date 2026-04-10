@@ -16,8 +16,7 @@ set dotenv-load := true
 
 # start project
 @start *ARGS:
-    just app-start
-    just stop
+    just app-start {{ ARGS }}
 
 # stop project
 @stop *ARGS:
@@ -83,4 +82,5 @@ set dotenv-load := true
     rm -rf ./src/.pytest_cache/
     rm -rf .coverage
     rm -rf .ty_cache/
-    find . | grep -E "(__pycache__|\.pyc$)" | xargs rm -rf
+    find . -type d -name __pycache__ -exec rm -rf {} +
+    find . -type f -name "*.pyc" -delete

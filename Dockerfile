@@ -13,11 +13,9 @@ RUN groupadd -g "${GID}" app \
   && mkdir -p /app/staticfiles \
   && chown app:app -R /app/staticfiles /app
 
-USER app
-
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,target=/home/app/.cache/uv,uid=${UID},gid=${GID} \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     if [ "$UV_INSTALL_DEV" = "false" ] || [ "$UV_INSTALL_DEV" = "0" ]; then \
@@ -25,6 +23,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     else \
         uv sync --frozen --no-install-project --group dev --group test; \
     fi
+
+USER app
 
 COPY ./src /app/src
 
@@ -41,6 +41,7 @@ COPY --from=builder --chown=app:app /app /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
     USER="app"
 
 USER app
