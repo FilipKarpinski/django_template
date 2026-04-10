@@ -68,6 +68,14 @@ set dotenv-load := true
 @test-cov *ARGS:
     just run coverage run -m pytest --ds=config.settings.test && coverage report -m {{ ARGS }}
 
+# start production stack
+@prod-start *ARGS:
+    docker compose -f compose.prod.yml up {{ ARGS }}
+
+# stop production stack
+@prod-stop *ARGS:
+    docker compose -f compose.prod.yml down {{ ARGS }}
+
 # clean up cache files etc.
 @clean *ARGS:
     rm -rf .ruff_cache/
