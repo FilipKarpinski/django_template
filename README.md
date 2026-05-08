@@ -65,18 +65,21 @@ Copy `.env.example` to `.env` (done automatically by `just bootstrap`). The defa
 
 ### CI/CD
 
-The GitHub Actions workflow requires no additional secrets for lint and test jobs. The `GITHUB_TOKEN` is provided automatically by GitHub.
+The pipeline uses three branches with distinct responsibilities:
 
-On push to `main`, the `release` job builds a Docker image and pushes it to GitHub Container Registry (`ghcr.io`). For this to work:
+| Event | Jobs | What happens |
+|---|---|---|
+| Pull request | `lint` + `test` | Code is linted and tested against a throwaway local build — image is never pushed |
+| Merge to `release` | `lint` + `build` | Image is built once and pushed to GHCR as `:sha-<commit>` and `:latest` |
+| Merge to `main` | `deploy` | `:latest` image is pulled on the VPS, containers restarted, migrations run |
 
-1. **Enable write access for GitHub Actions** — go to Settings > Actions > General > Workflow permissions and set to **"Read and write permissions"**
-2. No extra secrets needed — `GITHUB_TOKEN` has `packages: write` permission configured in the workflow
+The image is built **only on merge to `release`**. Merging `release` → `main` is a pure deployment trigger — no rebuild.
 
-The image is published as `ghcr.io/<owner>/<repo>:latest` and `ghcr.io/<owner>/<repo>:sha-<commit>`.
+Enable write access for GitHub Actions so the `build` job can push to GHCR: go to **Settings > Actions > General > Workflow permissions** and set to **"Read and write permissions"**.
 
 ### Production Deployment
 
-On every push to `main`, the CI pipeline builds a Docker image, pushes it to GHCR, then SSHs into your VPS to pull and restart the app. Follow these steps to set it up.
+Follow these steps to set up the VPS and wire up the CI deploy pipeline.
 
 #### 1. Generate an SSH key pair for CI
 
@@ -129,12 +132,7 @@ Edit `.env` and fill in the required values:
 
 #### 6. Verify auto-deploy
 
-Push a commit to `main`. The CI pipeline will:
-
-1. **Lint** — ruff, ty, hadolint
-2. **Test** — pytest in Docker
-3. **Release** — build and push image to `ghcr.io/<owner>/<repo>:latest`
-4. **Deploy** — copy `compose.prod.yml` + `nginx/`, pull the new image, restart containers, run migrations, prune old images
+Merge a branch into `release`. The pipeline will lint and build the image. Then merge `release` into `main` — the pipeline will copy deployment files, pull the new image, restart containers, and run migrations.
 
 Once the first deploy completes, create a superuser:
 
