@@ -173,9 +173,11 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "coverage" },
     { name = "django-debug-toolbar" },
     { name = "granian", extra = ["reload"] },
     { name = "pre-commit" },
+    { name = "pytest-django" },
     { name = "ruff" },
     { name = "ty" },
 ]
@@ -195,9 +197,11 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "coverage", specifier = ">=7.6" },
     { name = "django-debug-toolbar", specifier = ">=4.4.6" },
     { name = "granian", extras = ["reload"], specifier = ">=1.7.4" },
     { name = "pre-commit", specifier = ">=4.5.1" },
+    { name = "pytest-django", specifier = ">=4.9.0" },
     { name = "ruff", specifier = ">=0.9.1" },
     { name = "ty", specifier = ">=0.0.29" },
 ]
