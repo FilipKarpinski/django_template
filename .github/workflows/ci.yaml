@@ -104,6 +104,17 @@ jobs:
     runs-on: "ubuntu-latest"
 
     steps:
+      - uses: "actions/checkout@v4"
+
+      - name: Copy deployment files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          target: ${{ secrets.DEPLOY_PATH }}
+          source: "compose.prod.yml,nginx/"
+
       - name: Deploy to production
         uses: appleboy/ssh-action@v1
         with:
@@ -114,4 +125,6 @@ jobs:
             cd ${{ secrets.DEPLOY_PATH }}
             docker compose -f compose.prod.yml pull app
             docker compose -f compose.prod.yml up -d
+            docker compose -f compose.prod.yml exec app python manage.py migrate --noinput
             docker image prune -f
+

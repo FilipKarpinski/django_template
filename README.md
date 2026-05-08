@@ -46,8 +46,10 @@ Available recipes:
     test *ARGS        # run tests
     test-cov *ARGS    # run tests with coverage
     clean *ARGS       # clean up cache files etc.
-    prod-start *ARGS  # start production stack
-    prod-stop *ARGS   # stop production stack
+    prod-provision *ARGS      # provision production server with ansible
+    prod-start *ARGS          # start production stack
+    prod-stop *ARGS           # stop production stack
+    prod-createsuperuser      # create superuser on production server
 ```
 
 
@@ -76,24 +78,7 @@ The image is published as `ghcr.io/<owner>/<repo>:latest` and `ghcr.io/<owner>/<
 
 On every push to `main`, the CI pipeline builds a Docker image, pushes it to GHCR, then SSHs into your VPS to pull and restart the app. Follow these steps to set it up.
 
-#### 1. Provision the VPS
-
-Install Docker and Docker Compose on your server (e.g., Hetzner, DigitalOcean):
-
-```sh
-# Install Docker (Ubuntu/Debian)
-curl -fsSL https://get.docker.com | sh
-```
-
-#### 2. Create a deploy user on the VPS
-
-```sh
-# On the VPS
-sudo adduser --disabled-password deploy
-sudo usermod -aG docker deploy
-```
-
-#### 3. Generate an SSH key pair for CI
+#### 1. Generate an SSH key pair for CI
 
 On your local machine, generate a dedicated key pair (no passphrase):
 
@@ -101,14 +86,26 @@ On your local machine, generate a dedicated key pair (no passphrase):
 ssh-keygen -t ed25519 -f ~/.ssh/deploy_key -C "github-actions-deploy" -N ""
 ```
 
-Add the **public** key to the VPS:
+#### 2. Provision the VPS with Ansible
+
+The `ansible/` directory contains a playbook that fully sets up the server: Docker, deploy user, firewall, and project directory.
 
 ```sh
-# Copy the public key to the deploy user's authorized_keys
-ssh-copy-id -i ~/.ssh/deploy_key.pub deploy@<your-vps-ip>
+# Copy example files
+cp ansible/vars.example.yml ansible/vars.yml
+cp ansible/inventory.example ansible/inventory
+
+# Fill in your server IP in inventory and set ci_public_key in vars.yml
+# (use the contents of ~/.ssh/deploy_key.pub)
+
+# Run the playbook (requires Ansible and the community.general + posix collections)
+ansible-galaxy collection install community.general ansible.posix
+just prod-provision
 ```
 
-#### 4. Add GitHub repository secrets
+After the playbook completes, edit `{{ deploy_path }}/.env` on the server to fill in your production secrets.
+
+#### 3. Add GitHub repository secrets
 
 Go to your repo **Settings > Secrets and variables > Actions** and add:
 
@@ -117,26 +114,9 @@ Go to your repo **Settings > Secrets and variables > Actions** and add:
 | `DEPLOY_HOST` | Your VPS IP address or hostname |
 | `DEPLOY_USER` | `deploy` (or whichever user you created) |
 | `DEPLOY_SSH_KEY` | Contents of `~/.ssh/deploy_key` (the **private** key) |
-| `DEPLOY_PATH` | Absolute path to the project on the VPS (e.g., `/home/deploy/myapp`) |
+| `DEPLOY_PATH` | Absolute path set in `ansible/vars.yml` (e.g., `/home/deploy/myapp`) |
 
-#### 5. Set up the project on the VPS
-
-```sh
-# SSH into the VPS as the deploy user
-ssh deploy@<your-vps-ip>
-
-# Create the project directory
-mkdir -p ~/myapp && cd ~/myapp
-
-# Copy the production compose file and env
-# (from your local machine)
-scp compose.prod.yml .env.prod.example deploy@<your-vps-ip>:~/myapp/
-scp -r nginx deploy@<your-vps-ip>:~/myapp/
-
-# On the VPS, create and configure .env
-cd ~/myapp
-cp .env.prod.example .env
-```
+> `compose.prod.yml` and `nginx/` are copied automatically by the CI pipeline on every deploy — no manual file copying needed.
 
 Edit `.env` and fill in the required values:
 
@@ -147,25 +127,19 @@ Edit `.env` and fill in the required values:
 - `DATABASE_URL` — must match `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB`
 - `APP_IMAGE` — your GHCR image (e.g., `ghcr.io/<owner>/<repo>:latest`)
 
-#### 6. First deploy
-
-Start the stack manually the first time to run initial migrations:
-
-```sh
-cd ~/myapp
-docker compose -f compose.prod.yml pull
-docker compose -f compose.prod.yml up -d
-docker compose -f compose.prod.yml exec app python manage.py migrate
-docker compose -f compose.prod.yml exec app python manage.py createsuperuser
-```
-
-#### 7. Verify auto-deploy
+#### 6. Verify auto-deploy
 
 Push a commit to `main`. The CI pipeline will:
 
 1. **Lint** — ruff, ty, hadolint
 2. **Test** — pytest in Docker
 3. **Release** — build and push image to `ghcr.io/<owner>/<repo>:latest`
-4. **Deploy** — SSH into VPS, pull the new image, restart containers, prune old images
+4. **Deploy** — copy `compose.prod.yml` + `nginx/`, pull the new image, restart containers, run migrations, prune old images
+
+Once the first deploy completes, create a superuser:
+
+```sh
+just prod-createsuperuser
+```
 
 Monitor the workflow in the **Actions** tab of your repository.

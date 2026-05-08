@@ -1,0 +1,5 @@
+deploy_user: deploy
+deploy_path: /home/deploy/myapp
+
+# Public key from the CI SSH key pair (contents of ~/.ssh/deploy_key.pub)
+ci_public_key: "ssh-ed25519 AAAA... github-actions-deploy"

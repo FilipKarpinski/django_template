@@ -67,6 +67,15 @@ set dotenv-load := true
 @test-cov *ARGS:
     just run coverage run -m pytest --ds=config.settings.test && coverage report -m {{ ARGS }}
 
+# provision production server with ansible
+@prod-provision *ARGS:
+    ansible-playbook -i ansible/inventory ansible/playbook.yml {{ ARGS }}
+
+# create superuser on production server
+@prod-createsuperuser:
+    ssh {{ env('DEPLOY_USER') }}@{{ env('DEPLOY_HOST') }} \
+      "docker compose -f {{ env('DEPLOY_PATH') }}/compose.prod.yml exec app python manage.py createsuperuser"
+
 # start production stack
 @prod-start *ARGS:
     docker compose -f compose.prod.yml up {{ ARGS }}
