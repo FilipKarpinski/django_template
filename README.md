@@ -13,7 +13,7 @@ An opinionated boilerplate project using Django with a dockerized development en
 
 
 ## Get Started
-This project leverages [uv](https://docs.astral.sh/uv/getting-started/installation/), [just](https://github.com/casey/just) and [Docker Compose](https://docs.docker.com/compose/install/) for managing the development environment. Make sure you have installed he necessary dependencies for running them on your local machine.
+This project leverages [uv](https://docs.astral.sh/uv/getting-started/installation/), [just](https://github.com/casey/just) and [Docker Compose](https://docs.docker.com/compose/install/) for managing the development environment. Make sure you have installed the necessary dependencies for running them on your local machine.
 
 Initialize the dev environment with the `just bootstrap` recipe. This will build the dev image and prepare everything before you can start the app and the dependant infrastructure services with the `just start` recipe. Stop all services with hitting `CTRL+C` or using the `just stop` recipe in another terminal. 
 
@@ -23,33 +23,11 @@ just start
 ```
 
 ## Usage
-The most used project commands are available as just recipe:
-```shell
-just [recipe]
-```
 
-```make
-Available recipes:
-    bootstrap *ARGS   # bootstrap project
-    build *ARGS       # build project
-    start *ARGS       # start project
-    stop *ARGS        # stop project
-    infra-start *ARGS # start infra services
-    infra-stop *ARGS  # stop infra services
-    app-start *ARGS   # start django app
-    app-stop *ARGS    # start django app
-    run *ARGS         # uv run command in container
-    manage *ARGS      # run django management command
-    env               # copy .env.example to .env if not exists
-    pre *ARGS         # run pre-commit processes
-    ruff *ARGS        # run ruff linting & formatting
-    test *ARGS        # run tests
-    test-cov *ARGS    # run tests with coverage
-    clean *ARGS       # clean up cache files etc.
-    prod-provision *ARGS      # provision production server with ansible
-    prod-start *ARGS          # start production stack
-    prod-stop *ARGS           # stop production stack
-    prod-createsuperuser      # create superuser on production server
+All project commands are available as just recipes. Run `just` to list them:
+
+```sh
+just
 ```
 
 
@@ -130,7 +108,7 @@ Edit `.env` and fill in the required values:
 - `DATABASE_URL` — must match `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB`
 - `APP_IMAGE` — your GHCR image (e.g., `ghcr.io/<owner>/<repo>:latest`)
 
-#### 6. Verify auto-deploy
+#### 4. Verify auto-deploy
 
 Merge a branch into `release`. The pipeline will lint and build the image. Then merge `release` into `main` — the pipeline will copy deployment files, pull the new image, restart containers, and run migrations.
 

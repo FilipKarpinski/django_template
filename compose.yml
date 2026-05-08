@@ -4,7 +4,6 @@ x-app: &default-app
     args:
       UID: "${UID:-1000}"
       GID: "${GID:-1000}"
-      NODE_ENV: "${NODE_ENV:-production}"
       UV_INSTALL_DEV: "${UV_INSTALL_DEV:-false}"
       DJANGO_DEBUG: "${DJANGO_DEBUG:-false}"
   depends_on:

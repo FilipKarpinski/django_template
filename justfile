@@ -14,10 +14,6 @@ set dotenv-load := true
 @build *ARGS:
     docker compose build {{ ARGS }}
 
-# start project
-@start *ARGS:
-    just app-start {{ ARGS }}
-
 # stop project
 @stop *ARGS:
     docker compose down {{ ARGS }}
@@ -34,7 +30,7 @@ set dotenv-load := true
 @app-start *ARGS:
     docker compose up app {{ ARGS }} --watch
 
-# start django app
+# stop django app
 @app-stop *ARGS:
     docker compose down app {{ ARGS }}
 
@@ -75,14 +71,6 @@ set dotenv-load := true
 @prod-createsuperuser:
     ssh {{ env('DEPLOY_USER') }}@{{ env('DEPLOY_HOST') }} \
       "docker compose -f {{ env('DEPLOY_PATH') }}/compose.prod.yml exec app python manage.py createsuperuser"
-
-# start production stack
-@prod-start *ARGS:
-    docker compose -f compose.prod.yml up {{ ARGS }}
-
-# stop production stack
-@prod-stop *ARGS:
-    docker compose -f compose.prod.yml down {{ ARGS }}
 
 # clean up cache files etc.
 @clean *ARGS:
