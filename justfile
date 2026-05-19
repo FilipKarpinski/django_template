@@ -34,6 +34,10 @@ set dotenv-load := true
 @app-stop *ARGS:
     docker compose down app {{ ARGS }}
 
+# start django app with debugpy on port 5678 (attach VS Code debugger after)
+@debug *ARGS:
+    docker compose up app-debug {{ ARGS }}
+
 # uv run command in container
 @run *ARGS:
     docker compose run --rm app {{ ARGS }}

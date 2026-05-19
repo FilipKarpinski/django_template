@@ -37,6 +37,20 @@ services:
       retries: 3
     
   
+  app-debug:
+    <<: [*default-app]
+    build:
+      context: "."
+      args:
+        UID: "${UID:-1000}"
+        GID: "${GID:-1000}"
+        UV_INSTALL_DEV: "true"
+        DJANGO_DEBUG: "true"
+    ports:
+      - "8000:8000"
+      - "5678:5678"
+    command: ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "django", "runserver", "--noreload", "0.0.0.0:8000"]
+
   db:
     image: postgres:17
     environment:
