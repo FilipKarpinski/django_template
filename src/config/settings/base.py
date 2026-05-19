@@ -28,9 +28,9 @@ env = environ.Env()
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DJANGO_DEBUG", default=False)
+DEBUG = env.bool("DJANGO_DEBUG", default=False)  # type: ignore[arg-type]
 
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])  # type: ignore[arg-type]
 
 # Application definition
 INSTALLED_APPS = [
@@ -81,11 +81,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": env.db(
         "DATABASE_URL",
-        default="postgres://djangouser:djangopw@db:5432/djangodb",
+        default="postgres://djangouser:djangopw@db:5432/djangodb",  # type: ignore[arg-type]
     ),
 }
 
-DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=600)
+DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=600)  # type: ignore[arg-type]
 
 
 # Password validation
