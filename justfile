@@ -59,10 +59,6 @@ set dotenv-load := true
     uv run ruff check src {{ ARGS }}
     uv run ruff format src
 
-# rebuild the vendored tailwind css from templates
-@tailwind *ARGS:
-    npx --yes tailwindcss@3.4.17 -c tailwind.config.js -i assets/tailwind.css -o src/static/vendor/tailwind.css --minify {{ ARGS }}
-
 # run tests
 @test *ARGS:
     just run pytest {{ ARGS }} --ds=config.settings.test

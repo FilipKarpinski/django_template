@@ -33,16 +33,6 @@ jobs:
         with:
           dockerfile: Dockerfile
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Check vendored Tailwind CSS is up to date
-        run: |
-          npx --yes tailwindcss@3.4.17 -c tailwind.config.js \
-            -i assets/tailwind.css -o src/static/vendor/tailwind.css --minify
-          git diff --exit-code -- src/static/vendor/tailwind.css
-
   test:
     needs: [lint]
     if: github.event_name == 'pull_request'
