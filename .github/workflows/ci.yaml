@@ -48,7 +48,7 @@ jobs:
         run: docker compose build
 
       - name: Start Docker containers
-        run: docker compose up -d
+        run: docker compose up -d app
 
       - name: Run tests
         run: docker compose exec app pytest --ds=config.settings.test
